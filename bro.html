@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Sushi - daily challenge</title>
+	
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+		:root { color-scheme:light; --ink:#111; --muted:#666b73; --paper:#fff; --canvas:#f0f1f3; --accent:#e33b43; --line:#d9dadd; --edge:#b9bdc4; --action-bg:#111; --action-text:#fff; --crack-edge:#159447; --crack-glint:#8cf0ad; --shadow:0 18px 36px rgba(17,17,17,.08), 0 3px 8px rgba(17,17,17,.06); --lift:0 24px 40px rgba(17,17,17,.13), 0 8px 14px rgba(17,17,17,.08); }
+		* { box-sizing:border-box; }
+		:root[data-theme="dark"] { color-scheme:dark; --ink:#f2f2f2; --muted:#a3a3a3; --paper:#0b0b0b; --canvas:#050505; --accent:#ff6268; --line:#252525; --edge:#1b1b1b; --action-bg:#171717; --action-text:#f2f2f2; --shadow:0 18px 36px rgba(0,0,0,.18), 0 3px 8px rgba(0,0,0,.14); --lift:0 24px 40px rgba(0,0,0,.24), 0 8px 14px rgba(0,0,0,.16); }
+		@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]):not([data-theme="dark"]) { color-scheme:dark; --ink:#f2f2f2; --muted:#a3a3a3; --paper:#0b0b0b; --canvas:#050505; --accent:#ff6268; --line:#252525; --edge:#1b1b1b; --action-bg:#171717; --action-text:#f2f2f2; --shadow:0 18px 36px rgba(0,0,0,.18), 0 3px 8px rgba(0,0,0,.14); --lift:0 24px 40px rgba(0,0,0,.24), 0 8px 14px rgba(0,0,0,.16); } }
+		body { margin:0; min-height:100vh; color:var(--ink); background:var(--canvas); font-family:'Space Grotesk',sans-serif; -webkit-font-smoothing:antialiased; transition:background .3s,color .3s; }
+		.page { width:min(1280px,100%); min-height:100vh; margin:auto; padding:clamp(22px,4vw,48px) clamp(20px,7vw,100px); background:var(--paper); box-shadow:0 0 0 1px rgba(23,26,32,.025),0 28px 80px rgba(23,26,32,.12); transform:translateZ(0); }
+		nav { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:clamp(90px,16vh,170px); }
+		.brand { display:flex; align-items:center; gap:11px; font-size:20px; font-weight:600; letter-spacing:-.06em; }
+		.brand-mark { display:grid; place-items:center; width:27px; height:27px; border-radius:50%; background:var(--accent); color:#fff; font-size:13px; font-weight:500; }
+		.sushi-word span:nth-child(1) { color:#c9434d; }
+		.sushi-word span:nth-child(2) { color:#26734b; }
+		.sushi-word span:nth-child(3) { color:#b96623; }
+		.sushi-word span:nth-child(4) { color:#9b762a; }
+		.sushi-word span:nth-child(5) { color:#a84668; }
+		.brand .sushi-word { font-size:inherit; }
+		h1 .sushi-word { display:inline-flex; }
+		.nav-note { color:var(--accent); font:10px 'DM Mono',monospace; letter-spacing:.14em; text-transform:uppercase; }
+		.settings { position:relative; margin-left:auto; }
+		.settings summary { padding:10px 13px; border:1px solid var(--line); border-radius:4px; background:var(--paper); box-shadow:0 3px 0 var(--edge),var(--shadow); color:var(--ink); cursor:pointer; font:10px 'DM Mono',monospace; letter-spacing:.1em; list-style:none; transition:transform .2s,box-shadow .2s; }
+		.settings summary::-webkit-details-marker { display:none; }
+		.settings summary::after { content:"＋"; margin-left:9px; color:var(--accent); }
+		.settings[open] summary::after { content:"−"; }
+		.settings summary:hover { transform:translateY(-2px); box-shadow:0 5px 0 var(--edge),var(--lift); }
+		.settings-panel { position:absolute; z-index:2; top:calc(100% + 12px); right:0; display:grid; gap:16px; width:min(290px,calc(100vw - 40px)); padding:20px; border:1px solid var(--line); border-radius:5px; background:var(--paper); box-shadow:0 8px 0 var(--edge),var(--lift); text-align:left; transform-origin:top right; }
+		.settings[open] .settings-panel { animation:settings-enter .2s ease both; }
+		@keyframes settings-enter { from { opacity:0; transform:translateY(-8px) scale(.97); } to { opacity:1; transform:none; } }
+		.setting-row { display:flex; align-items:center; justify-content:space-between; gap:16px; color:var(--ink); font-size:13px; }
+		.setting-row select { max-width:135px; padding:8px 10px; border:1px solid var(--line); border-radius:3px; background:var(--paper); color:var(--ink); font:12px 'DM Mono',monospace; }
+		.setting-row input { flex:0 0 auto; width:18px; height:18px; accent-color:var(--accent); }
+		.settings-status { min-height:14px; margin:0; color:var(--muted); font:10px 'DM Mono',monospace; line-height:1.5; }
+		.hero { max-width:780px; margin:auto; text-align:center; }
+		.eyebrow { margin:0 0 22px; color:var(--accent); font:500 10px 'DM Mono',monospace; letter-spacing:.2em; text-transform:uppercase; }
+		h1 { margin:0; font-size:clamp(3.2rem,8vw,7.2rem); font-weight:500; line-height:.92; letter-spacing:-.075em; }
+		.subhead { max-width:440px; margin:24px auto 38px; color:var(--muted); font-size:16px; line-height:1.65; }
+		.search { display:flex; align-items:center; gap:13px; padding:7px 8px 7px 19px; border:1px solid var(--edge); border-radius:5px; background:var(--paper); box-shadow:0 5px 0 var(--edge),var(--shadow); text-align:left; transform:translateZ(18px); transition:border-color .2s, box-shadow .2s, transform .2s; }
+		.search:focus-within { transform:translateY(-3px) translateZ(24px); border-color:var(--ink); box-shadow:0 8px 0 var(--edge),var(--lift); }
+		.search.is-searching { animation:search-pulse 1.2s ease-in-out infinite; }
+		@keyframes search-pulse { 50% { border-color:var(--accent); box-shadow:0 7px 0 var(--accent),0 0 0 4px color-mix(in srgb,var(--accent) 15%,transparent),var(--lift); } }
+		.search.is-searching button { position:relative; color:transparent; cursor:wait; }
+		.search.is-searching button::after { position:absolute; top:50%; left:50%; width:14px; height:14px; border:2px solid rgba(255,255,255,.55); border-top-color:transparent; border-radius:50%; content:""; transform:translate(-50%,-50%); animation:search-spin .7s linear infinite; }
+		@keyframes search-spin { to { rotate:360deg; } }
+		.search-icon { width:19px; color:var(--muted); font-size:21px; line-height:1; }
+		input { min-width:0; flex:1; border:0; outline:0; color:var(--ink); background:transparent; font:15px 'Space Grotesk',sans-serif; }
+		input::placeholder { color:var(--muted); }
+		button { border:0; cursor:pointer; font:600 11px 'Space Grotesk',sans-serif; letter-spacing:.12em; }
+		.search button { min-width:115px; padding:14px 20px; border-radius:3px; background:var(--action-bg); box-shadow:0 3px 0 var(--edge); color:var(--action-text); transition:background .2s,transform .2s,box-shadow .2s; }
+		.search button:hover { transform:translateY(-2px); box-shadow:0 5px 0 var(--edge); }
+		.key-row { display:flex; gap:15px; align-items:center; margin-top:22px; text-align:left; }
+		.key-row label { color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.1em; white-space:nowrap; }
+		.key-input { width:100%; min-width:0; padding:11px 13px; border:1px solid var(--line); border-radius:3px; outline:0; color:var(--ink); background:var(--paper); font:12px 'DM Mono',monospace; }
+		.key-input:focus { border-color:var(--ink); }
+		.voice-control { display:flex; align-items:center; gap:12px; margin-top:18px; text-align:left; }
+		.voice-button { flex:0 0 auto; padding:12px 15px; border:1px solid var(--line); border-radius:4px; background:var(--paper); box-shadow:0 3px 0 var(--edge),var(--shadow); color:var(--ink); font:600 10px 'DM Mono',monospace; letter-spacing:.08em; transition:transform .2s,box-shadow .2s; }
+		.voice-button:hover { transform:translateY(-2px); box-shadow:0 5px 0 var(--edge),var(--lift); }
+		.voice-status { margin:0; color:var(--muted); font-size:12px; line-height:1.5; }
+		.chips { display:flex; justify-content:center; flex-wrap:wrap; gap:9px; margin-top:26px; }
+		.chip { padding:9px 13px; border:1px solid var(--line); border-radius:3px; background:var(--paper); box-shadow:0 3px 0 var(--edge),var(--shadow); color:var(--muted); font:11px 'DM Mono',monospace; transform:translateZ(8px); transition:border-color .2s, color .2s,transform .2s,box-shadow .2s; }
+		.chip:hover { transform:translateY(-3px) translateZ(14px); border-color:var(--ink); box-shadow:0 6px 0 var(--edge),var(--lift); color:var(--ink); }
+		.daily-challenge { max-width:620px; margin:clamp(64px,9vh,96px) auto 0; padding:24px; border:1px solid var(--line); border-radius:5px; background:var(--paper); box-shadow:0 6px 0 var(--edge),var(--shadow); text-align:left; transform:perspective(900px) rotateX(1deg); transition:transform .25s,box-shadow .25s; }
+		.daily-challenge:hover { transform:perspective(900px) rotateX(0) translateY(-4px); box-shadow:0 10px 0 var(--edge),var(--lift); }
+		.challenge-label { margin:0 0 16px; color:var(--accent); font:500 10px 'DM Mono',monospace; letter-spacing:.17em; text-transform:uppercase; }
+		.daily-challenge h2 { margin:0 0 10px; font-size:clamp(1.35rem,3vw,1.8rem); font-weight:500; letter-spacing:-.05em; }
+		.challenge-question { margin:0; color:var(--ink); font-size:15px; line-height:1.65; }
+		.challenge-answer { margin-top:18px; color:var(--muted); font:11px 'DM Mono',monospace; }
+		.challenge-answer summary { width:fit-content; color:var(--ink); cursor:pointer; letter-spacing:.04em; }
+		.challenge-answer p { margin:12px 0 0; color:var(--muted); font:14px 'Space Grotesk',sans-serif; line-height:1.65; }
+		.dictionary-dock { position:fixed; z-index:11; right:clamp(16px,3vw,32px); bottom:clamp(16px,3vw,32px); display:flex; flex-direction:column; align-items:stretch; gap:12px; }
+		.dock-item { position:relative; }
+		.dictionary-toggle { padding:14px 18px; border:1px solid var(--line); border-radius:5px; background:var(--action-bg); box-shadow:0 5px 0 var(--edge),var(--lift); color:var(--action-text); font:600 11px 'Space Grotesk',sans-serif; letter-spacing:.1em; transition:transform .2s,box-shadow .2s; }
+		.dictionary-toggle:hover { transform:translateY(-3px); box-shadow:0 8px 0 var(--edge),var(--lift); }
+		.dictionary-panel[hidden], .pc-panel[hidden] { display:none; }
+		.dictionary-panel, .pc-panel { position:absolute; right:0; bottom:calc(100% + 15px); width:min(390px,calc(100vw - 32px)); max-height:min(70vh,560px); overflow:auto; padding:24px; border:1px solid var(--line); border-radius:6px; background:var(--paper); box-shadow:0 8px 0 var(--edge),var(--lift); text-align:left; transform-origin:bottom right; }
+		.dictionary-panel.is-open { animation:dictionary-enter .2s ease both; }
+		.pc-panel.is-open { animation:dictionary-enter .2s ease both; }
+		@keyframes dictionary-enter { from { opacity:0; transform:translateY(10px) scale(.97); } to { opacity:1; transform:none; } }
+		.dictionary-panel-header { display:flex; align-items:start; justify-content:space-between; gap:12px; }
+		.dictionary-panel-header .challenge-label { margin-bottom:8px; }
+		.dictionary-close { padding:4px 8px; border:1px solid var(--line); border-radius:3px; background:var(--paper); color:var(--ink); font-size:16px; }
+		.dictionary-close:hover { border-color:var(--ink); }
+		.pc-check-button { padding:12px 18px; border:1px solid var(--line); border-radius:5px; background:var(--paper); box-shadow:0 4px 0 var(--edge),var(--shadow); color:var(--ink); font:600 10px 'Space Grotesk',sans-serif; letter-spacing:.1em; transition:transform .2s,box-shadow .2s; }
+		.pc-check-button:hover { transform:translateY(-2px); box-shadow:0 6px 0 var(--edge),var(--lift); }
+		.pc-panel h2 { margin:0 0 8px; font-size:20px; font-weight:500; }
+		.pc-note { margin:0 0 16px; color:var(--muted); font-size:12px; line-height:1.55; }
+		.pc-run { padding:10px 13px; border-radius:3px; background:var(--action-bg); color:var(--action-text); }
+		.pc-status { margin:14px 0 0; color:var(--muted); font-size:12px; line-height:1.5; }
+		.pc-specs { display:grid; grid-template-columns:1fr auto; gap:9px 16px; margin:16px 0 0; font-size:12px; }
+		.pc-specs dt { color:var(--muted); }
+		.pc-specs dd { margin:0; color:var(--ink); text-align:right; }
+		.virus-help { margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+		.virus-help-button { padding:0; background:transparent; color:var(--accent); font:600 10px 'DM Mono',monospace; letter-spacing:.08em; text-align:left; }
+		.virus-help-button:hover { text-decoration:underline; }
+		.virus-help-text { margin:10px 0 0; color:var(--muted); font-size:12px; line-height:1.6; }
+		@media (max-width:620px) { .dictionary-panel, .pc-panel { right:-4px; padding:18px; } .dictionary-toggle { padding:13px 15px; } .pc-check-button { padding:11px 15px; } }
+		.dictionary h2 { margin:0 0 15px; font-size:clamp(1.35rem,3vw,1.8rem); font-weight:500; letter-spacing:-.05em; }
+		.dictionary-form { display:flex; gap:9px; }
+		.dictionary-form input { min-width:0; padding:11px 13px; border:1px solid var(--line); border-radius:3px; background:var(--paper); }
+		.dictionary-form button { padding:0 16px; border-radius:3px; background:var(--action-bg); color:var(--action-text); }
+		.dictionary-status { min-height:20px; margin:14px 0 0; color:var(--muted); font-size:13px; line-height:1.55; }
+		.dictionary-result { margin-top:18px; }
+		.dictionary-result h3 { margin:0 0 12px; font-size:18px; font-weight:500; }
+		.dictionary-result h4 { margin:15px 0 6px; color:var(--accent); font:500 10px 'DM Mono',monospace; letter-spacing:.12em; text-transform:uppercase; }
+		.dictionary-result ol { margin:0; padding-left:20px; color:var(--muted); font-size:14px; line-height:1.6; }
+		.dictionary-result li + li { margin-top:5px; }
+		.visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+		.results { display:none; max-width:780px; margin:clamp(80px,12vh,130px) auto 0; }
+		.results.visible { display:block; }
+		@keyframes rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+		.result-top { display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--line); padding-bottom:16px; }
+		.result-label { margin:0; color:var(--accent); font:500 10px 'DM Mono',monospace; letter-spacing:.16em; text-transform:uppercase; }
+		.result-query { margin:0; color:var(--muted); font:11px 'DM Mono',monospace; }
+		.answer { display:grid; grid-template-columns:3px 1fr; gap:21px; margin:30px 0 34px; }
+		.answer-bar { background:var(--accent); }
+		.answer h2 { margin:0 0 11px; font-size:clamp(1.5rem,3vw,2.2rem); font-weight:500; letter-spacing:-.05em; }
+		.answer p { max-width:650px; margin:0; color:var(--muted); font-size:16px; line-height:1.75; }
+		.sources { display:grid; grid-template-columns:repeat(2,1fr); gap:13px; }
+		.source { display:block; min-height:115px; padding:18px; border:1px solid var(--line); border-radius:4px; background:var(--paper); box-shadow:0 4px 0 var(--edge),var(--shadow); color:inherit; text-decoration:none; transform:translateZ(10px); transition:border-color .2s,transform .2s,box-shadow .2s; }
+		.source:hover { transform:translateY(-4px) translateZ(16px); border-color:var(--ink); box-shadow:0 8px 0 var(--edge),var(--lift); }
+		.source-type { display:block; margin-bottom:15px; color:var(--accent); font:10px 'DM Mono',monospace; letter-spacing:.12em; text-transform:uppercase; }
+		.source strong { display:block; margin-bottom:6px; font-size:15px; font-weight:500; }
+		.source small { color:var(--muted); line-height:1.4; }
+		footer { display:flex; justify-content:space-between; gap:20px; margin-top:90px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.05em; }
+		:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+		body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+		body.reduce-motion .daily-challenge:hover, body.reduce-motion .chip:hover, body.reduce-motion .source:hover, body.reduce-motion .settings summary:hover, body.reduce-motion .search:focus-within, body.reduce-motion .search button:hover { transform:none; }
+		.crack-overlay { position:fixed; z-index:10; inset:0; width:100%; height:100%; opacity:.38; pointer-events:none; }
+		.crack-edge, .crack-glint { fill:none; stroke-linecap:round; stroke-linejoin:round; }
+		.crack-edge { stroke:var(--crack-edge); stroke-width:2.1; }
+		.crack-glint { stroke:var(--crack-glint); stroke-width:.8; }
+		@media (max-width:620px) { nav { flex-wrap:wrap; margin-bottom:90px; } .nav-note { display:none; } .settings { margin-left:auto; } .search { padding-left:12px; } .search button { min-width:auto; padding:13px 12px; } .key-row { align-items:flex-start; flex-direction:column; gap:8px; } .voice-control { align-items:flex-start; flex-direction:column; } .sources { grid-template-columns:1fr; } .daily-challenge { padding:20px; } footer { flex-direction:column; margin-top:65px; } }
+		@media (prefers-reduced-motion:reduce) { *, *::before, *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
+	</style>
+
+	</head>
+	<body>
+		<div class="page">
+			<nav aria-label="Main navigation">
+				<div class="brand">
+					<span class="brand-mark" aria-hidden="true">S</span>
+					<span class="sushi-word" aria-label="Sushi"><span>S</span><span>u</span><span>s</span><span>h</span><span>i</span></span>
+				</div>
+				<span class="nav-note">A little sushi know-how</span>
+				<details class="settings">
+					<summary>SETTINGS</summary>
+					<div class="settings-panel">
+						<label class="setting-row" for="themeSetting">Theme
+							<select id="themeSetting">
+								<option value="system">System</option>
+								<option value="light">Light</option>
+								<option value="dark">Dark</option>
+							</select>
+						</label>
+						<label class="setting-row" for="motionSetting">Reduce motion
+							<input id="motionSetting" type="checkbox">
+						</label>
+						<label class="setting-row" for="musicSetting">Calm music
+							<input id="musicSetting" type="checkbox">
+						</label>
+						<p class="settings-status" id="settingsStatus" role="status"></p>
+					</div>
+				</details>
+			</nav>
+
+			<main>
+				<section class="hero" aria-labelledby="pageTitle">
+					<p class="eyebrow">YOUR FRIENDLY SUSHI GUIDE</p>
+					<h1 id="pageTitle"><span class="sushi-word" aria-label="sushi"><span>S</span><span>u</span><span>s</span><span>h</span><span>i</span></span> 🍱</h1>
+					<p class="subhead">Ask a question and get a clear, quick answer. Learn a little more about every bite.</p>
+					<form class="search" id="searchForm">
+						<span class="search-icon" aria-hidden="true">⌕</span>
+						<label class="visually-hidden" for="query">Ask a sushi question</label>
+						<input id="query" name="question" type="search" placeholder="What is the difference between sushi and sashimi?" autocomplete="off" required>
+						<button type="submit">ASK</button>
+					</form>
+					<div class="voice-control">
+						<button class="voice-button" id="voiceButton" type="button">START VOICE ASSISTANT</button>
+						<p class="voice-status" id="voiceStatus" role="status">Say “Hey Sushi” followed by a question.</p>
+					</div>
+					<div class="chips" aria-label="Try a sample question">
+						<button class="chip" type="button">What is nigiri?</button>
+						<button class="chip" type="button">How is wasabi made?</button>
+						<button class="chip" type="button">What is in a California roll?</button>
+					</div>
+				</section>
+
+				<section class="daily-challenge" aria-labelledby="challengeHeading">
+					<p class="challenge-label" id="challengeDate">DAILY CHALLENGE</p>
+					<h2 id="challengeHeading">A quick sushi quiz</h2>
+					<p class="challenge-question" id="challengeQuestion"></p>
+					<details class="challenge-answer">
+						<summary>Show the answer</summary>
+						<p id="challengeAnswer"></p>
+					</details>
+				</section>
+
+				<section class="results" id="results" aria-live="polite">
+					<div class="result-top">
+						<p class="result-label">SUSHI ANSWER</p>
+						<p class="result-query" id="resultQuery"></p>
+					</div>
+					<div class="answer">
+						<span class="answer-bar" aria-hidden="true"></span>
+						<div>
+							<h2 id="answerTitle">Answer</h2>
+							<p id="answerText"></p>
+						</div>
+					</div>
+					<div class="sources" id="sources"></div>
+				</section>
+			</main>
+
+			<footer>
+				<span>Made for curious sushi fans.</span>
+				<span>Ask, learn, enjoy.</span>
+			</footer>
+		</div>
+
+		<div class="dictionary-dock">
+			<div class="dock-item">
+				<section class="pc-panel" id="pcPanel" hidden aria-labelledby="pcHeading">
+					<div class="dictionary-panel-header">
+						<div>
+							<p class="challenge-label">YOUR DEVICE</p>
+							<h2 id="pcHeading">Device check</h2>
+						</div>
+						<button class="dictionary-close" id="pcClose" type="button" aria-label="Close device check">×</button>
+					</div>
+					<p class="pc-note">See basic information your browser shares with this page. This is not a security scan.</p>
+					<button class="pc-run" id="pcRun" type="button">CHECK DEVICE</button>
+					<p class="pc-status" id="pcStatus" role="status">Your device information has not been checked.</p>
+					<dl class="pc-specs" id="pcSpecs" hidden></dl>
+					<div class="virus-help">
+						<button class="virus-help-button" id="virusHelpToggle" type="button" aria-expanded="false" aria-controls="virusHelpText">VIRUS SAFETY TIPS</button>
+						<p class="virus-help-text" id="virusHelpText" hidden></p>
+					</div>
+				</section>
+				<button class="pc-check-button" id="pcToggle" type="button" aria-expanded="false" aria-controls="pcPanel">DEVICE CHECK</button>
+			</div>
+			<div class="dock-item">
+				<section class="dictionary-panel" id="dictionaryPanel" hidden aria-labelledby="dictionaryHeading">
+					<div class="dictionary-panel-header">
+						<div>
+							<p class="challenge-label">WORD LOOKUP</p>
+							<h2 id="dictionaryHeading">Dictionary</h2>
+						</div>
+						<button class="dictionary-close" id="dictionaryClose" type="button" aria-label="Close dictionary">×</button>
+					</div>
+					<form class="dictionary-form" id="dictionaryForm">
+						<label class="visually-hidden" for="dictionaryWord">Word to look up</label>
+						<input id="dictionaryWord" type="search" placeholder="Enter a word" autocomplete="off" required>
+						<button type="submit">LOOK UP</button>
+					</form>
+					<p class="dictionary-status" id="dictionaryStatus" role="status"></p>
+					<div class="dictionary-result" id="dictionaryResult"></div>
+				</section>
+				<button class="dictionary-toggle" id="dictionaryToggle" type="button" aria-expanded="false" aria-controls="dictionaryPanel">DICTIONARY</button>
+			</div>
+		</div>
+
+	<script>
+		const themeSetting = document.getElementById('themeSetting');
+		const motionSetting = document.getElementById('motionSetting');
+		const musicSetting = document.getElementById('musicSetting');
+		const settingsStatus = document.getElementById('settingsStatus');
+		const settingsStorageKey = 'sushi-settings';
+		const defaultSettings = {
+			theme: 'system',
+			reduceMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		};
+		let settings = defaultSettings;
+		try {
+			const savedSettings = JSON.parse(localStorage.getItem(settingsStorageKey) || 'null');
+			if (savedSettings && ['system', 'light', 'dark'].includes(savedSettings.theme)) {
+				settings = {
+					theme: savedSettings.theme,
+					reduceMotion: typeof savedSettings.reduceMotion === 'boolean'
+						? savedSettings.reduceMotion
+						: defaultSettings.reduceMotion
+				};
+			}
+		} catch (error) {
+			settingsStatus.textContent = 'Preferences could not be loaded in this browser.';
+		}
+
+		function applySettings() {
+			if (settings.theme === 'system') {
+				document.documentElement.removeAttribute('data-theme');
+			} else {
+				document.documentElement.dataset.theme = settings.theme;
+			}
+			document.body.classList.toggle('reduce-motion', settings.reduceMotion);
+			themeSetting.value = settings.theme;
+			motionSetting.checked = settings.reduceMotion;
+		}
+
+		function saveSettings() {
+			try {
+				localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
+				settingsStatus.textContent = '';
+			} catch (error) {
+				settingsStatus.textContent = 'Could not save preferences in this browser.';
+			}
+		}
+
+		applySettings();
+
+		themeSetting.addEventListener('change', () => {
+			settings.theme = themeSetting.value;
+			applySettings();
+			saveSettings();
+		});
+		motionSetting.addEventListener('change', () => {
+			settings.reduceMotion = motionSetting.checked;
+			applySettings();
+			saveSettings();
+		});
+		let musicContext = null;
+		let musicGain = null;
+		let musicRequest = 0;
+		musicSetting.addEventListener('change', async () => {
+			const requestId = ++musicRequest;
+			settingsStatus.textContent = '';
+			if (!musicSetting.checked) {
+				if (musicContext && musicGain) {
+					const contextToClose = musicContext;
+					musicGain.gain.cancelScheduledValues(contextToClose.currentTime);
+					musicGain.gain.setTargetAtTime(0, contextToClose.currentTime, 0.25);
+					musicContext = null;
+					musicGain = null;
+					window.setTimeout(() => {
+						contextToClose.close().catch(error => {
+							settingsStatus.textContent = `Could not stop the music cleanly: ${error.message}`;
+						});
+					}, 900);
+				}
+				return;
+			}
+
+			let context;
+			try {
+				const AudioContextClass = window.AudioContext;
+				if (!AudioContextClass) throw new Error('This browser does not support generated audio.');
+
+				context = new AudioContextClass();
+				const masterGain = context.createGain();
+				masterGain.gain.setValueAtTime(0, context.currentTime);
+				masterGain.gain.setTargetAtTime(0.12, context.currentTime, 1.8);
+				masterGain.connect(context.destination);
+
+				for (const [frequency, volume] of [
+					[130.81, 0.12],
+					[196, 0.08],
+					[261.63, 0.055],
+					[329.63, 0.025]
+				]) {
+					const oscillator = context.createOscillator();
+					const voiceGain = context.createGain();
+					oscillator.type = 'sine';
+					oscillator.frequency.value = frequency;
+					voiceGain.gain.value = volume;
+					oscillator.connect(voiceGain);
+					voiceGain.connect(masterGain);
+					oscillator.start();
+				}
+
+				await context.resume();
+				if (requestId !== musicRequest || !musicSetting.checked) {
+					await context.close();
+					return;
+				}
+				musicContext = context;
+				musicGain = masterGain;
+			} catch (error) {
+				if (context && context.state !== 'closed') await context.close();
+				musicSetting.checked = false;
+				settingsStatus.textContent = error.message || 'Could not start calm music.';
+			}
+		});
+
+		const dailyChallenges = [
+			{ question: 'What is the name for sushi made with a slice of fish over pressed rice?', answer: 'Nigiri: a small mound of vinegared rice topped with an ingredient, often fish.' },
+			{ question: 'What sea vegetable is commonly used to wrap maki rolls?', answer: 'Nori, a dried edible seaweed that is pressed into thin sheets.' },
+			{ question: 'What is the Japanese name for the pickled ginger served with sushi?', answer: 'Gari. It is usually eaten between different pieces to refresh your palate.' },
+			{ question: 'What does “sashimi” refer to: seasoned rice, or thinly sliced fish served without rice?', answer: 'Thinly sliced fish or seafood served without sushi rice.' },
+			{ question: 'What is wasabi traditionally made from?', answer: 'The grated stem of the wasabi plant, a Japanese member of the mustard family.' },
+			{ question: 'What is tamago on a sushi menu?', answer: 'A sweet-savory Japanese rolled omelet, often served as nigiri.' },
+			{ question: 'What is the name for sushi rolled inside a sheet of nori?', answer: 'Maki-zushi, commonly shortened to maki.' }
+		];
+		const today = new Date();
+		const localDay = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) / 86_400_000;
+		const challenge = dailyChallenges[localDay % dailyChallenges.length];
+		document.getElementById('challengeDate').textContent =
+			`DAILY CHALLENGE · ${today.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}`;
+		document.getElementById('challengeQuestion').textContent = challenge.question;
+		document.getElementById('challengeAnswer').textContent = challenge.answer;
+
+		const pcPanel = document.getElementById('pcPanel');
+		const pcToggle = document.getElementById('pcToggle');
+		const pcClose = document.getElementById('pcClose');
+		const pcRun = document.getElementById('pcRun');
+		const pcStatus = document.getElementById('pcStatus');
+		const pcSpecs = document.getElementById('pcSpecs');
+		const virusHelpToggle = document.getElementById('virusHelpToggle');
+		const virusHelpText = document.getElementById('virusHelpText');
+		const dictionaryPanel = document.getElementById('dictionaryPanel');
+		const dictionaryToggle = document.getElementById('dictionaryToggle');
+		const dictionaryClose = document.getElementById('dictionaryClose');
+		const dictionaryForm = document.getElementById('dictionaryForm');
+		const dictionaryWord = document.getElementById('dictionaryWord');
+		const dictionaryStatus = document.getElementById('dictionaryStatus');
+		const dictionaryResult = document.getElementById('dictionaryResult');
+		const dictionaryButton = dictionaryForm.querySelector('button[type="submit"]');
+
+		function setDockPanelOpen(panel, toggle, isOpen, otherPanel, otherToggle) {
+			otherPanel.hidden = true;
+			otherPanel.classList.remove('is-open');
+			otherToggle.setAttribute('aria-expanded', 'false');
+			panel.hidden = !isOpen;
+			toggle.setAttribute('aria-expanded', String(isOpen));
+			if (isOpen) {
+				panel.classList.remove('is-open');
+				requestAnimationFrame(() => panel.classList.add('is-open'));
+			} else {
+				panel.classList.remove('is-open');
+				toggle.focus();
+			}
+		}
+
+		function getDeviceInfo() {
+			const platform = navigator.userAgentData?.platform || navigator.platform || '';
+			const userAgent = navigator.userAgent || '';
+			const isIPad = /iPad/i.test(userAgent) ||
+				(platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+			const isAndroid = /Android/i.test(userAgent) || /Android/i.test(platform);
+			const isIPhone = /iPhone|iPod/i.test(userAgent);
+			let operatingSystem = 'Other operating system';
+			let deviceType = 'Computer or device';
+
+			if (isIPad) {
+				operatingSystem = 'iPadOS';
+				deviceType = 'iPad';
+			} else if (isIPhone) {
+				operatingSystem = 'iOS';
+				deviceType = 'iPhone';
+			} else if (isAndroid) {
+				operatingSystem = 'Android';
+				deviceType = /Mobile/i.test(userAgent) ? 'Android phone' : 'Android tablet';
+			} else if (/Windows/i.test(platform) || /Windows/i.test(userAgent)) {
+				operatingSystem = 'Windows';
+				deviceType = 'Windows computer';
+			} else if (/macOS|Macintosh|MacIntel/i.test(platform + ' ' + userAgent)) {
+				operatingSystem = 'macOS';
+				deviceType = 'Mac computer';
+			} else if (/Chrome OS|CrOS/i.test(platform + ' ' + userAgent)) {
+				operatingSystem = 'ChromeOS';
+				deviceType = 'Chromebook';
+			} else if (/Linux/i.test(platform + ' ' + userAgent)) {
+				operatingSystem = 'Linux';
+				deviceType = 'Linux computer';
+			}
+
+			const model = navigator.userAgentData?.model;
+			if (model) deviceType = `${model} (${deviceType})`;
+			return { operatingSystem, deviceType };
+		}
+
+		function showDeviceSpecs() {
+			const browser = navigator.userAgentData?.brands
+				?.map(item => item.brand)
+				.filter(brand => !brand.toLowerCase().includes('not'))
+				.join(', ') || 'Not reported';
+			const { operatingSystem, deviceType } = getDeviceInfo();
+			const memory = typeof navigator.deviceMemory === 'number'
+				? `About ${navigator.deviceMemory} GB`
+				: 'Not reported by browser';
+			const cpu = typeof navigator.hardwareConcurrency === 'number'
+				? `${navigator.hardwareConcurrency} logical cores`
+				: 'Not reported by browser';
+			const screenSize = `${screen.width} × ${screen.height} (${window.devicePixelRatio || 1}× scale)`;
+			const rows = [
+				['Device', deviceType],
+				['Operating system', operatingSystem],
+				['Temperature', 'Not available to websites'],
+				['CPU', cpu],
+				['Memory', memory],
+				['Screen', screenSize],
+				['Browser', browser],
+				['Internet', navigator.onLine ? 'Connected' : 'Offline']
+			];
+			const fragment = document.createDocumentFragment();
+			for (const [label, value] of rows) {
+				const term = document.createElement('dt');
+				const description = document.createElement('dd');
+				term.textContent = label;
+				description.textContent = value;
+				fragment.append(term, description);
+			}
+			pcSpecs.replaceChildren(fragment);
+			pcSpecs.hidden = false;
+			pcStatus.textContent = 'Check complete. Values are browser-reported and may be approximate.';
+		}
+
+		pcToggle.addEventListener('click', () => {
+			setDockPanelOpen(pcPanel, pcToggle, pcPanel.hidden, dictionaryPanel, dictionaryToggle);
+		});
+		pcClose.addEventListener('click', () => {
+			setDockPanelOpen(pcPanel, pcToggle, false, dictionaryPanel, dictionaryToggle);
+		});
+		pcRun.addEventListener('click', showDeviceSpecs);
+		virusHelpToggle.addEventListener('click', () => {
+			const isOpen = virusHelpText.hidden;
+			virusHelpText.hidden = !isOpen;
+			virusHelpToggle.setAttribute('aria-expanded', String(isOpen));
+			if (isOpen) {
+				const { operatingSystem, deviceType } = getDeviceInfo();
+				if (operatingSystem === 'macOS') {
+					virusHelpText.textContent = 'This webpage cannot scan your Mac. macOS includes XProtect, which checks for known malware automatically. Keep macOS updated in System Settings → General → Software Update. For a manual scan, use a reputable security app downloaded from its official site.';
+				} else if (operatingSystem === 'Windows') {
+					virusHelpText.textContent = 'This webpage cannot scan your PC. Open Windows Security → Virus & threat protection → Quick scan to use Microsoft Defender. Keep Windows and security definitions up to date.';
+				} else if (operatingSystem === 'iOS' || operatingSystem === 'iPadOS') {
+					virusHelpText.textContent = `This webpage cannot scan your ${deviceType}. Keep iOS updated in Settings → General → Software Update, and remove unfamiliar apps or configuration profiles. Apple does not provide a general-purpose virus scanner for iPhone or iPad.`;
+				} else if (operatingSystem === 'Android') {
+					virusHelpText.textContent = 'This webpage cannot scan your Android device. Open Google Play Store → profile picture → Play Protect → Scan. Keep Android and apps up to date.';
+				} else if (operatingSystem === 'ChromeOS') {
+					virusHelpText.textContent = 'This webpage cannot scan your Chromebook. Install ChromeOS updates from Settings → About ChromeOS, and remove unfamiliar browser extensions. ChromeOS includes built-in protections.';
+				} else if (operatingSystem === 'Linux') {
+					virusHelpText.textContent = 'This webpage cannot scan your Linux computer. Install security updates using your distribution’s official updater. If you need a malware scan, use a reputable scanner from your distribution’s trusted repositories.';
+				} else {
+					virusHelpText.textContent = 'This webpage cannot scan your device. Use the security scanner built into your operating system, install updates, and only download scanners from their official sources.';
+				}
+			}
+		});
+		function setDictionaryOpen(isOpen) {
+			setDockPanelOpen(dictionaryPanel, dictionaryToggle, isOpen, pcPanel, pcToggle);
+			if (isOpen) dictionaryWord.focus();
+		}
+
+		dictionaryToggle.addEventListener('click', () => {
+			setDictionaryOpen(dictionaryPanel.hidden);
+		});
+		dictionaryClose.addEventListener('click', () => setDictionaryOpen(false));
+		document.addEventListener('keydown', event => {
+			if (event.key === 'Escape' && !dictionaryPanel.hidden) setDictionaryOpen(false);
+			if (event.key === 'Escape' && !pcPanel.hidden) {
+				setDockPanelOpen(pcPanel, pcToggle, false, dictionaryPanel, dictionaryToggle);
+			}
+		});
+
+		dictionaryForm.addEventListener('submit', async event => {
+			event.preventDefault();
+			const word = dictionaryWord.value.trim();
+			if (!word) {
+				dictionaryStatus.textContent = 'Enter a word to look up.';
+				dictionaryResult.replaceChildren();
+				return;
+			}
+
+			dictionaryStatus.textContent = 'Looking up the word…';
+			dictionaryResult.replaceChildren();
+			dictionaryButton.disabled = true;
+			dictionaryForm.setAttribute('aria-busy', 'true');
+
+			try {
+				const response = await fetch(
+					`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`
+				);
+				const entries = await response.json();
+				if (!response.ok) {
+					if (response.status === 404) {
+						dictionaryStatus.textContent = `No dictionary entry found for “${word}”.`;
+						return;
+					}
+					throw new Error(entries?.message || 'The dictionary request failed.');
+				}
+
+				const entry = entries[0];
+				const heading = document.createElement('h3');
+				heading.textContent = entry.word || word;
+				dictionaryResult.append(heading);
+
+				let definitionCount = 0;
+				for (const meaning of entry.meanings || []) {
+					const definitions = (meaning.definitions || [])
+						.filter(item => typeof item.definition === 'string' && item.definition)
+						.slice(0, 3);
+					if (!definitions.length) continue;
+
+					const partOfSpeech = document.createElement('h4');
+					partOfSpeech.textContent = meaning.partOfSpeech || 'Definition';
+					const list = document.createElement('ol');
+					for (const item of definitions) {
+						const definition = document.createElement('li');
+						definition.textContent = item.definition;
+						list.append(definition);
+					}
+					dictionaryResult.append(partOfSpeech, list);
+					definitionCount += definitions.length;
+					if (definitionCount >= 6) break;
+				}
+
+				dictionaryStatus.textContent = definitionCount
+					? 'Definitions provided by the free Dictionary API.'
+					: 'No definitions were available for this entry.';
+			} catch (error) {
+				dictionaryStatus.textContent = error.message || 'Could not look up that word. Check your connection and try again.';
+			} finally {
+				dictionaryButton.disabled = false;
+				dictionaryForm.removeAttribute('aria-busy');
+			}
+		});
+
+		const form = document.getElementById('searchForm');
+		const searchButton = form.querySelector('button[type="submit"]');
+		const query = document.getElementById('query');
+		const results = document.getElementById('results');
+		const resultQuery = document.getElementById('resultQuery');
+		const answerTitle = document.getElementById('answerTitle');
+		const answerText = document.getElementById('answerText');
+		const sources = document.getElementById('sources');
+		const voiceButton = document.getElementById('voiceButton');
+		const voiceStatus = document.getElementById('voiceStatus');
+		const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+		let recognition = null;
+		let voiceListening = false;
+		let voiceStarting = false;
+		function microphoneDeniedMessage() {
+			if (location.protocol === 'file:') {
+				return 'Microphone access is blocked for this file page. The webpage cannot change browser permissions. Run the page with node server.js, open http://localhost:8000/bro.html, then allow microphone access. If it was blocked before, change Microphone to Allow in browser site settings.';
+			}
+			return 'Microphone access is blocked. Change Microphone to Allow in this site’s browser settings, then try again.';
+		}
+
+		function speakAnswer(answer) {
+			if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+				voiceStatus.textContent = 'Answer displayed. Spoken answers are not supported by this browser.';
+				return;
+			}
+			try {
+				window.speechSynthesis.cancel();
+				const utterance = new SpeechSynthesisUtterance(answer);
+				utterance.onerror = () => {
+					voiceStatus.textContent = 'Answer displayed, but speech playback failed.';
+				};
+				window.speechSynthesis.speak(utterance);
+				voiceStatus.textContent = 'Answering aloud…';
+			} catch (error) {
+				voiceStatus.textContent = `Answer displayed, but speech playback failed: ${error.message}`;
+			}
+		}
+
+		async function makeResult(raw, speak = false) {
+			const clean = raw.trim();
+			if (!clean) return;
+
+			resultQuery.textContent = `for: ${clean}`;
+			answerTitle.textContent = 'Thinking...';
+			answerText.textContent = 'Asking the model for an answer...';
+			sources.innerHTML = '';
+			results.classList.remove('visible');
+			results.classList.add('visible');
+			form.classList.add('is-searching');
+			form.setAttribute('aria-busy', 'true');
+			searchButton.disabled = true;
+			searchButton.setAttribute('aria-label', 'Searching');
+
+			try {
+				const response = await fetch('/ask', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ question: clean })
+				});
+
+				const data = await response.json();
+				if (!response.ok) {
+					if (response.status === 401) {
+						throw new Error('Your OpenAI API key is incorrect or invalid. Check it and try again.');
+					}
+					throw new Error(data.error || 'OpenAI request failed.');
+				}
+
+				answerTitle.textContent = 'Answer';
+				const answer = data.answer || 'The model returned no answer.';
+				answerText.textContent = answer;
+				sources.innerHTML = '<div class="source"><span class="source-type">AI</span><strong>OpenAI response</strong><small>Answer generated by OpenAI ↗</small></div>';
+				if (speak) speakAnswer(answer);
+			} catch (error) {
+				answerTitle.textContent = 'Error';
+				answerText.textContent = error instanceof TypeError && error.message === 'Failed to fetch'
+					? 'Could not reach the local search server. In a terminal, run node server.js, then open http://localhost:8000/bro.html and try again.'
+					: error.message || 'The request failed. Check your API key and server status.';
+				sources.innerHTML = '';
+				if (speak) voiceStatus.textContent = error.message || 'Could not get an answer.';
+			} finally {
+				form.classList.remove('is-searching');
+				form.removeAttribute('aria-busy');
+				searchButton.disabled = false;
+				searchButton.removeAttribute('aria-label');
+			}
+		}
+
+		async function startVoiceAssistant() {
+			if (!SpeechRecognition) {
+				voiceStatus.textContent = 'Voice recognition is not supported in this browser. Try a current version of Chrome or Edge.';
+				return;
+			}
+			if (!navigator.mediaDevices?.getUserMedia) {
+				voiceStatus.textContent = 'This browser cannot request microphone access. Open the page in a supported browser over HTTPS or localhost.';
+				return;
+			}
+
+			voiceStarting = true;
+			voiceButton.disabled = true;
+			voiceButton.textContent = 'ALLOW MICROPHONE...';
+			voiceStatus.textContent = 'Please allow microphone access in your browser prompt to start listening.';
+			try {
+				const microphone = await navigator.mediaDevices.getUserMedia({ audio: true });
+				microphone.getTracks().forEach(track => track.stop());
+			} catch (error) {
+				if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
+					voiceStatus.textContent = microphoneDeniedMessage();
+				} else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+					voiceStatus.textContent = 'No microphone was found. Connect a microphone and try again.';
+				} else {
+					voiceStatus.textContent = `Could not access the microphone: ${error.message || error.name}.`;
+				}
+				return;
+			} finally {
+				voiceStarting = false;
+				voiceButton.disabled = false;
+				voiceButton.textContent = 'START VOICE ASSISTANT';
+			}
+
+			recognition = new SpeechRecognition();
+			recognition.lang = 'en-US';
+			recognition.continuous = false;
+			recognition.interimResults = false;
+			recognition.onstart = () => {
+				voiceListening = true;
+				voiceButton.textContent = 'STOP LISTENING';
+				voiceStatus.textContent = 'Listening once. Say “Hey Sushi” and your question.';
+			};
+			recognition.onresult = event => {
+				const heard = event.results[event.resultIndex][0].transcript.trim();
+				const match = heard.match(/^\s*hey[\s,]+sushi\b[\s,.:;!?-]*(.*)$/i);
+				if (!match || !match[1].trim()) {
+					voiceStatus.textContent = 'I didn’t hear “Hey Sushi” followed by a question. Tap to try again.';
+					return;
+				}
+
+				const spokenQuestion = match[1].trim();
+				query.value = spokenQuestion;
+				voiceStatus.textContent = `You asked: “${spokenQuestion}”`;
+				makeResult(spokenQuestion, true);
+			};
+			recognition.onerror = event => {
+				const messages = {
+					'not-allowed': microphoneDeniedMessage(),
+					'no-speech': 'I didn’t hear anything. Tap to try again.',
+					'network': 'The browser speech-to-text service could not connect. This can happen even when your internet works if the browser or network blocks that service. Try Chrome or Edge, check VPN/firewall settings, or type your question instead.'
+				};
+				voiceStatus.textContent = messages[event.error] || `Voice recognition error: ${event.error}.`;
+			};
+			recognition.onend = () => {
+				voiceListening = false;
+				voiceButton.textContent = 'START VOICE ASSISTANT';
+				recognition = null;
+			};
+			try {
+				recognition.start();
+			} catch (error) {
+				voiceStatus.textContent = error.message || 'Could not start voice recognition.';
+				recognition = null;
+			}
+		}
+
+		voiceButton.addEventListener('click', () => {
+			if (voiceStarting) return;
+			if (voiceListening && recognition) {
+				recognition.stop();
+				voiceStatus.textContent = 'Voice assistant stopped.';
+				return;
+			}
+			startVoiceAssistant();
+		});
+
+		form.addEventListener('submit', event => {
+			event.preventDefault();
+			makeResult(query.value);
+		});
+
+		document.querySelectorAll('.chip').forEach(chip => {
+			chip.addEventListener('click', () => {
+				query.value = chip.textContent;
+				makeResult(query.value);
+			});
+		});
+	</script>
+</body>
+</html>
